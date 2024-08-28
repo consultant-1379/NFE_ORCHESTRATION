@@ -1,0 +1,8 @@
+0 # update-counter/version-index for this file
+# Interfaces (IP PORT)
+128.0.0.99  0 # Must be first. This is the internal router address. Listens to RIP here.
+128.0.0.99  1 #
+11.10.3.2 2 # Must be third. External IP address of vEPG
+# Nexthops (MAC PORT IP). Port 2 is external port. Port 0/1 are backplane internal ports.
+FF:00:00:00:00:00 2 11.10.3.1 #
+# EOF

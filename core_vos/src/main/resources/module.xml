@@ -1,0 +1,6 @@
+<module xmlns="urn:jboss:module:1.0" name="com.ericsson.oss.nfe.poc.utils.vo">
+	<resources>
+		<resource-root path="core_vos-1.0.jar" />
+         <resource-root path="gson-1.7.1.jar" />
+	</resources>
+</module>

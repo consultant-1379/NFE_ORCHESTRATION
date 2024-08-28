@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.ericsson.oss.services.wfs</groupId>
+		<artifactId>WorkflowService</artifactId>
+		<version>1.1.6</version>
+		<relativePath>../..</relativePath>
+	</parent>
+	<artifactId>wfs-client-demo</artifactId>
+	<packaging>war</packaging>
+
+	<name>WFS Client Demo</name>
+
+	<properties>
+		<version.maven-war-plugin>2.2</version.maven-war-plugin>
+		<maven.site.skip>true</maven.site.skip>
+		<maven.site.deploy.skip>true</maven.site.deploy.skip>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<configuration>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
+					<webappDirectory>target/${project.parent.artifactId}-${project.version}</webappDirectory>
+					<resource>
+						<directory>${basedir}/src/main/webapp/WEB-INF</directory>
+						<filtering>true</filtering>
+						<targetPath>WEB-INF</targetPath>
+						<includes>
+							<include>*.xml</include>
+						</includes>
+					</resource>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.jboss.as.plugins</groupId>
+				<artifactId>jboss-as-maven-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

@@ -1,0 +1,47 @@
+@media screen and (min-width: 768px) {
+
+    .eaWfsDemo-mainTabs {
+    
+        &-tabWfDefinition {
+            max-width: 120px;
+        }
+            &-contentWfDefinition-home {
+                    height: 800px;
+                    width: 100%;
+            }
+///---------------------------------
+        &-tabWfActive {
+            max-width: 120px;
+        }
+            &-contentWfActive {
+                &-home {             
+                    height: 800px;
+                    width: 100%;
+                }
+                &-eaLayout-row1-column2 {
+                    overflow: auto;
+                }
+                &-eaLayout-row2-column2 {
+                    overflow: auto;
+                    overflow-x: hidden;
+                }
+            }
+////-----------------------------
+        &-tabWfHistory {
+            max-width: 120px;
+        }
+            &-contentWfHistory {
+                &-home {           
+                    height: 800px;
+                    width: 100%;
+                }
+                &-column2-eaLayout-row1-column1 {
+                    overflow: auto;
+                    overflow-x: hidden;
+                }
+                &-column2-eaLayout-row2-column1 {
+                    overflow: auto;
+                }
+            }       
+    }
+}

@@ -1,0 +1,733 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://activiti.org/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd" id="_G01fsLmYEeO5uMBpzPhgTQ" targetNamespace="http://activiti.org/bpmn">
+  <bpmn2:process id="updateonrm" name="arne_import_process" isExecutable="true">
+    <bpmn2:extensionElements>
+      <camunda:executionListener class="com.ericsson.oss.nfe.poc.listeners.AppConfigLoader" event="start"/>
+    </bpmn2:extensionElements>
+    <bpmn2:exclusiveGateway id="ChooseGateway__prg" name="Choose&#xD;&#xA;Gateway" default="EPG_SequenceFlow1">
+      <bpmn2:incoming>SequenceFlow5</bpmn2:incoming>
+      <bpmn2:outgoing>EPG_SequenceFlow1</bpmn2:outgoing>
+      <bpmn2:outgoing>PGW_SequenceFlow1</bpmn2:outgoing>
+      <bpmn2:outgoing>SGW_SequenceFlow1</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="EPG_SequenceFlow1" name="EPG" sourceRef="ChooseGateway__prg" targetRef="EPG_BuildXML__prg__p50"/>
+    <bpmn2:sequenceFlow id="PGW_SequenceFlow1" name="P-GW" sourceRef="ChooseGateway__prg" targetRef="PGW_BuildXML__prg__p50">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression"><![CDATA[${execution.getVariable('instanceType') != null && execution.getVariable('instanceType') == "PGW"}]]></bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="SGW_SequenceFlow1" name="S-GW" sourceRef="ChooseGateway__prg" targetRef="SGW_BuildXML__prg__p50">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression"><![CDATA[${execution.getVariable('instanceType') != null && execution.getVariable('instanceType') == "SGW"}]]></bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:scriptTask id="LogError__prg" name="Log Error" scriptFormat="groovy">
+      <bpmn2:incoming>EndFailureFlow</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_2</bpmn2:outgoing>
+      <bpmn2:script><![CDATA[org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("com.ericsson.oss.nfe.poc.tasks"); 
+logger.info( '------------------------------------ ~~ Error happened Updating ONRM ~~----------------------------------');]]></bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_2" name="" sourceRef="LogError__prg" targetRef="Failure_EndEvent__prg__p100"/>
+    <bpmn2:endEvent id="Failure_EndEvent__prg__p100" name="End with Error!">
+      <bpmn2:incoming>SequenceFlow_2</bpmn2:incoming>
+      <bpmn2:errorEventDefinition id="_ErrorEventDefinition_5" errorRef="Error_1"/>
+    </bpmn2:endEvent>
+    <bpmn2:endEvent id="Successful_EndEvent__prg__p100" name="End Process">
+      <bpmn2:incoming>EndSuccessFlow</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:exclusiveGateway id="Success_Check__prg" name="Successfull&#xD;&#xA;execution?" default="EndFailureFlow">
+      <bpmn2:incoming>SGW_SequenceFlow4</bpmn2:incoming>
+      <bpmn2:incoming>PGW_SequenceFlow4</bpmn2:incoming>
+      <bpmn2:incoming>SequenceFlow_3</bpmn2:incoming>
+      <bpmn2:outgoing>EndSuccessFlow</bpmn2:outgoing>
+      <bpmn2:outgoing>EndFailureFlow</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="EndSuccessFlow" name="yes" sourceRef="Success_Check__prg" targetRef="Successful_EndEvent__prg__p100">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression"><![CDATA[${success== true}]]></bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="EndFailureFlow" name="Error" sourceRef="Success_Check__prg" targetRef="LogError__prg"/>
+    <bpmn2:scriptTask id="ExtractIPScript__prg__p40" name="Extract IP from VNIC" scriptFormat="groovy">
+      <bpmn2:incoming>SequenceFlow4</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow5</bpmn2:outgoing>
+      <bpmn2:script><![CDATA[def respSTR = execution.getVariable('getVMSResp')
+def slurper = new groovy.json.JsonSlurper()
+def respJson = slurper.parseText(respSTR.jsonStr)
+def oamVnic = null;
+ respJson.vm.vmvnics.each { item ->
+ 	if(item.vn.name=='EPG-OAM-VN')
+	{	
+		oamVnic = item;
+		
+	}
+}
+if(oamVnic!=null)
+{
+	println ' Got the OAM Vnic.publicIpAddress Vnic -->'+oamVnic.publicIpAddress
+	execution.setVariable('nfsvmip',   oamVnic.publicIpAddress)
+}
+else
+	throw new RuntimeException('EPG-OAM-VN vnic not defined')]]></bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:sequenceFlow id="SequenceFlow5" name="" sourceRef="ExtractIPScript__prg__p40" targetRef="ChooseGateway__prg"/>
+    <bpmn2:serviceTask id="OrderDetailsTask__prg__p10" camunda:class="com.ericsson.oss.nfe.poc.tasks.QuerryAndPopulateOrderItems" name="Get Order Details">
+      <bpmn2:incoming>SequenceFlow1</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow2</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SequenceFlow2" name="" sourceRef="OrderDetailsTask__prg__p10" targetRef="BuildURLScript__prg__p20"/>
+    <bpmn2:serviceTask id="VMRestCallTask__prg__p30" camunda:class="com.ericsson.oss.nfe.poc.tasks.GenericECMRESTInvoker" name="GET VM REST Call">
+      <bpmn2:extensionElements>
+        <camunda:field name="method" stringValue="GET"/>
+        <camunda:field name="endpointURL">
+          <camunda:expression>${getVNURL}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="outPutVariable">
+          <camunda:string>getVMSResp</camunda:string>
+        </camunda:field>
+        <camunda:field name="requestString">
+          <camunda:string>--</camunda:string>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow3</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow4</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SequenceFlow4" name="" sourceRef="VMRestCallTask__prg__p30" targetRef="ExtractIPScript__prg__p40"/>
+    <bpmn2:startEvent id="Start__prg__p0" name="Start Process">
+      <bpmn2:outgoing>SequenceFlow1</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow1" name="" sourceRef="Start__prg__p0" targetRef="OrderDetailsTask__prg__p10"/>
+    <bpmn2:scriptTask id="BuildURLScript__prg__p20" name="Build GetVM URL" scriptFormat="groovy">
+      <bpmn2:incoming>SequenceFlow2</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow3</bpmn2:outgoing>
+      <bpmn2:script><![CDATA[def vmId=execution.getVariable('ECM_NAMEID_MAP') ['epg-nfs-vm']
+def getVNURL = execution.getVariable('appConfigProps')['QUERY_VM_BY_ID']+vmId+ '?$expand=vmvnics'
+println 'URL : '+getVNURL
+execution.setVariable('getVNURL',getVNURL);]]></bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:sequenceFlow id="SequenceFlow3" name="" sourceRef="BuildURLScript__prg__p20" targetRef="VMRestCallTask__prg__p30"/>
+    <bpmn2:scriptTask id="ScriptTask_2" name="Log SSH Output" scriptFormat="groovy">
+      <bpmn2:incoming>SequenceFlow_1</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_3</bpmn2:outgoing>
+      <bpmn2:script><![CDATA[println "--------------------------------------output of ssh arne commands is ---------------------------------------"+execution.getVariable("sshoutPut")
+execution.setVariable('success',true);
+execution.removeVariable("epgnfsvmofferoutput");
+execution.removeVariable("epgvdcofferoutput");
+execution.removeVariable("postvdccreate");
+execution.removeVariable("epgnfsPostRequest");
+execution.removeVariable("epgnfsvmofferoutput");]]></bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_3" name="" sourceRef="ScriptTask_2" targetRef="Success_Check__prg"/>
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_2" name="Deployment Mode" default="PGW_local_flow">
+      <bpmn2:incoming>PGW_SequenceFlow2</bpmn2:incoming>
+      <bpmn2:outgoing>PGW_remote_flow</bpmn2:outgoing>
+      <bpmn2:outgoing>PGW_local_flow</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="PGW_remote_flow" name="remote" sourceRef="ExclusiveGateway_2" targetRef="PGW_FTP__prg__p70">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression"><![CDATA[${execution.getVariable("deploymentMode") !=null  && execution.getVariable("deploymentMode") =="remote"}]]></bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:serviceTask id="PGW_BuildXML__prg__p50" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.BuildXMLServiceTask" name="Build XML">
+      <bpmn2:extensionElements>
+        <camunda:field name="filename">
+          <camunda:expression><![CDATA[${appConfigProps['oss.onrm.inputxml']}
+					]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="vmip">
+          <camunda:expression>${nfsvmip}</camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>PGW_SequenceFlow1</bpmn2:incoming>
+      <bpmn2:outgoing>PGW_SequenceFlow2</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="PGW_SequenceFlow2" name="" sourceRef="PGW_BuildXML__prg__p50" targetRef="ExclusiveGateway_2"/>
+    <bpmn2:serviceTask id="PGW_Config_command__prg__p90" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.SSHServiceTask" name="RUN OSS Import Command">
+      <bpmn2:extensionElements>
+        <camunda:field name="sshHost">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.host']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPortNumber">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.port']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshUser">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.username']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPassword">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.password']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="command">
+          <camunda:expression><![CDATA[${appConfigProps['oss.onrm.arne.import']}]]></camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_7</bpmn2:incoming>
+      <bpmn2:incoming>SequenceFlow_13</bpmn2:incoming>
+      <bpmn2:outgoing>PGW_SequenceFlow4</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="PGW_SequenceFlow4" name="" sourceRef="PGW_Config_command__prg__p90" targetRef="Success_Check__prg"/>
+    <bpmn2:sequenceFlow id="PGW_local_flow" name="local" sourceRef="ExclusiveGateway_2" targetRef="PGW_LocalCopy__prg__p70"/>
+    <bpmn2:serviceTask id="PGW_FTP__prg__p70" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.FTPServiceTask" name="P-GW&#xD;&#xA;FTP file">
+      <bpmn2:extensionElements>
+        <camunda:field name="onrmFTPFile">
+          <camunda:expression><![CDATA[${appConfigProps['oss.onrm.outputxml']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="onrmFTPDestination">
+          <camunda:expression><![CDATA[${appConfigProps['oss.onrm.destination']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshHost">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.host']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPortNumber">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.port']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshUser">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.username']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPassword">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.password']}]]></camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>PGW_remote_flow</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_7</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_7" name="" sourceRef="PGW_FTP__prg__p70" targetRef="PGW_Config_command__prg__p90"/>
+    <bpmn2:serviceTask id="EPG_BuildXML__prg__p50" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.BuildXMLServiceTask" name="Build XML">
+      <bpmn2:extensionElements>
+        <camunda:field name="filename">
+          <camunda:expression>${appConfigProps['oss.onrm.inputxml']}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="vmip">
+          <camunda:expression>${nfsvmip}</camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>EPG_SequenceFlow1</bpmn2:incoming>
+      <bpmn2:outgoing>EPG_SequenceFlow2</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="EPG_SequenceFlow2" name="" sourceRef="EPG_BuildXML__prg__p50" targetRef="ExclusiveGateway_1"/>
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_1" name="Deployment Mode" default="EPG_local_flow">
+      <bpmn2:incoming>EPG_SequenceFlow2</bpmn2:incoming>
+      <bpmn2:outgoing>EPG_remote_flow</bpmn2:outgoing>
+      <bpmn2:outgoing>EPG_local_flow</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="EPG_remote_flow" name="remote" sourceRef="ExclusiveGateway_1" targetRef="EPG_FTP__prg__p70">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression"><![CDATA[${execution.getVariable("deploymentMode") !=null  && execution.getVariable("deploymentMode") =="remote"}]]></bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="EPG_local_flow" name="local" sourceRef="ExclusiveGateway_1" targetRef="EPG_LocalCopy__prg__p70"/>
+    <bpmn2:serviceTask id="EPG_FTP__prg__p70" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.FTPServiceTask" name="EPG&#xD;&#xA;FTP file">
+      <bpmn2:extensionElements>
+        <camunda:field name="srcFilePath">
+          <camunda:expression>${appConfigProps['oss.onrm.outputxml']}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="destFilePath">
+          <camunda:expression>${appConfigProps['oss.onrm.destination']}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshHost">
+          <camunda:expression>${appConfigProps['oss.ssh.host']}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPortNumber">
+          <camunda:expression>${appConfigProps['oss.ssh.port']}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshUser">
+          <camunda:expression>${appConfigProps['oss.ssh.username']}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPassword">
+          <camunda:expression>${appConfigProps['oss.ssh.password']}</camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>EPG_remote_flow</bpmn2:incoming>
+      <bpmn2:outgoing>EPG_SequenceFlow3</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="EPG_SequenceFlow3" name="" sourceRef="EPG_FTP__prg__p70" targetRef="EPG_Config_command__prg__p90"/>
+    <bpmn2:serviceTask id="EPG_Config_command__prg__p90" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.SSHServiceTask" name="RUN OSS Import Command">
+      <bpmn2:extensionElements>
+        <camunda:field name="sshHost">
+          <camunda:expression>${appConfigProps['oss.ssh.host']}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPortNumber">
+          <camunda:expression>${appConfigProps['oss.ssh.port']}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshUser">
+          <camunda:expression>${appConfigProps['oss.ssh.username']}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPassword">
+          <camunda:expression>${appConfigProps['oss.ssh.password']}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="command">
+          <camunda:expression>${appConfigProps['oss.onrm.arne.import']}</camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>EPG_SequenceFlow3</bpmn2:incoming>
+      <bpmn2:incoming>SequenceFlow_10</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_1</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_1" name="" sourceRef="EPG_Config_command__prg__p90" targetRef="ScriptTask_2"/>
+    <bpmn2:serviceTask id="SGW_FTP__prg__p70" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.FTPServiceTask" name="S-GW&#xD;&#xA;FTP file">
+      <bpmn2:extensionElements>
+        <camunda:field name="onrmFTPFile">
+          <camunda:expression><![CDATA[${appConfigProps['oss.onrm.outputxml']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="onrmFTPDestination">
+          <camunda:expression><![CDATA[${appConfigProps['oss.onrm.destination']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshHost">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.host']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPortNumber">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.port']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshUser">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.username']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPassword">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.password']}]]></camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SGW_remote_flow</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_9</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_9" name="" sourceRef="SGW_FTP__prg__p70" targetRef="SGW_Config_command__prg__p90"/>
+    <bpmn2:serviceTask id="SGW_Config_command__prg__p90" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.SSHServiceTask" name="RUN OSS Import Command">
+      <bpmn2:extensionElements>
+        <camunda:field name="srcFilePath">
+          <camunda:string>sample.xml</camunda:string>
+        </camunda:field>
+        <camunda:field name="destFilePath">
+          <camunda:string>/tmp</camunda:string>
+        </camunda:field>
+        <camunda:field name="sshPortNumber">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.port']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshUser">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.username']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPassword">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.password']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="command">
+          <camunda:expression><![CDATA[${appConfigProps['oss.onrm.arne.import']}]]></camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_9</bpmn2:incoming>
+      <bpmn2:incoming>SequenceFlow_15</bpmn2:incoming>
+      <bpmn2:outgoing>SGW_SequenceFlow4</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SGW_SequenceFlow4" name="" sourceRef="SGW_Config_command__prg__p90" targetRef="Success_Check__prg"/>
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_3" name="Deployment Mode" default="SGW_local_flow">
+      <bpmn2:incoming>SGW_SequenceFlow2</bpmn2:incoming>
+      <bpmn2:outgoing>SGW_remote_flow</bpmn2:outgoing>
+      <bpmn2:outgoing>SGW_local_flow</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="SGW_remote_flow" name="remote" sourceRef="ExclusiveGateway_3" targetRef="SGW_FTP__prg__p70">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression"><![CDATA[${execution.getVariable("deploymentMode") !=null  && execution.getVariable("deploymentMode") =="remote"}]]></bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="SGW_local_flow" name="local" sourceRef="ExclusiveGateway_3" targetRef="SGW_LocalCopy__prg__p70"/>
+    <bpmn2:serviceTask id="SGW_BuildXML__prg__p50" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.BuildXMLServiceTask" name="Build XML">
+      <bpmn2:extensionElements>
+        <camunda:field name="filename">
+          <camunda:expression><![CDATA[${appConfigProps['oss.onrm.inputxml']}
+					]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="vmip">
+          <camunda:expression>${nfsvmip}</camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SGW_SequenceFlow1</bpmn2:incoming>
+      <bpmn2:outgoing>SGW_SequenceFlow2</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SGW_SequenceFlow2" name="" sourceRef="SGW_BuildXML__prg__p50" targetRef="ExclusiveGateway_3"/>
+    <bpmn2:serviceTask id="PGW_LocalCopy__prg__p70" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.SSHServiceTask" name="PGW&#xD;&#xA;Local Copy Command">
+      <bpmn2:extensionElements>
+        <camunda:field name="sshHost">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.host']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPortNumber">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.port']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshUser">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.username']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPassword">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.password']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="command">
+          <camunda:expression><![CDATA[${appConfigProps['oss.onrm.local.copy']}]]></camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>PGW_local_flow</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_13</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_13" name="" sourceRef="PGW_LocalCopy__prg__p70" targetRef="PGW_Config_command__prg__p90"/>
+    <bpmn2:serviceTask id="SGW_LocalCopy__prg__p70" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.SSHServiceTask" name="SGW&#xD;&#xA;Local Copy Command">
+      <bpmn2:extensionElements>
+        <camunda:field name="sshHost">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.host']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPortNumber">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.port']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshUser">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.username']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPassword">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.password']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="command">
+          <camunda:expression><![CDATA[${appConfigProps['oss.onrm.local.copy']}	]]></camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SGW_local_flow</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_15</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_15" name="" sourceRef="SGW_LocalCopy__prg__p70" targetRef="SGW_Config_command__prg__p90"/>
+    <bpmn2:serviceTask id="EPG_LocalCopy__prg__p70" camunda:class="com.ericsson.oss.nfe.poc.tasks.ssh.SSHServiceTask" name="EPG&#xD;&#xA;Local Copy Command">
+      <bpmn2:extensionElements>
+        <camunda:field name="sshHost">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.host']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPortNumber">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.port']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshUser">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.username']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="sshPassword">
+          <camunda:expression><![CDATA[${appConfigProps['oss.ssh.password']}]]></camunda:expression>
+        </camunda:field>
+        <camunda:field name="command">
+          <camunda:expression><![CDATA[${appConfigProps['oss.onrm.local.copy']}]]></camunda:expression>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>EPG_local_flow</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_10</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_10" name="" sourceRef="EPG_LocalCopy__prg__p70" targetRef="EPG_Config_command__prg__p90"/>
+  </bpmn2:process>
+  <bpmn2:signal id="Signal_1" name="Eroor"/>
+  <bpmn2:error id="Error_1" errorCode="java.lang.RuntimeException" name="error"/>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="updateonrm">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_11" bpmnElement="Start__prg__p0">
+        <dc:Bounds height="36.0" width="36.0" x="0.0" y="332.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="86.0" x="0.0" y="377.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_2" bpmnElement="ChooseGateway__prg" isMarkerVisible="true">
+        <dc:Bounds height="50.0" width="50.0" x="769.0" y="324.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="38.0" width="60.0" x="711.0" y="308.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_24" bpmnElement="SGW_FTP__prg__p70">
+        <dc:Bounds height="80.0" width="100.0" x="1092.0" y="432.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_26" bpmnElement="EPG_Config_command__prg__p90">
+        <dc:Bounds height="80.0" width="100.0" x="1243.0" y="94.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_5" bpmnElement="EPG_SequenceFlow3" sourceElement="_BPMNShape_ServiceTask_23" targetElement="_BPMNShape_ServiceTask_26">
+        <di:waypoint xsi:type="dc:Point" x="1188.0" y="40.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1293.0" y="40.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1293.0" y="94.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1210.0" y="42.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_27" bpmnElement="PGW_Config_command__prg__p90">
+        <dc:Bounds height="80.0" width="100.0" x="1244.0" y="311.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_28" bpmnElement="SGW_Config_command__prg__p90">
+        <dc:Bounds height="80.0" width="100.0" x="1243.0" y="525.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_4" bpmnElement="Success_Check__prg" isMarkerVisible="true">
+        <dc:Bounds height="50.0" width="50.0" x="1379.0" y="324.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="38.0" width="83.0" x="1414.0" y="295.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_8" bpmnElement="PGW_SequenceFlow4" sourceElement="_BPMNShape_ServiceTask_27" targetElement="_BPMNShape_ExclusiveGateway_4">
+        <di:waypoint xsi:type="dc:Point" x="1344.0" y="351.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1361.0" y="351.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1379.0" y="350.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1322.0" y="350.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_9" bpmnElement="SGW_SequenceFlow4" sourceElement="_BPMNShape_ServiceTask_28" targetElement="_BPMNShape_ExclusiveGateway_4">
+        <di:waypoint xsi:type="dc:Point" x="1343.0" y="565.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1405.0" y="565.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1404.0" y="374.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1385.0" y="683.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_EndEvent_17" bpmnElement="Failure_EndEvent__prg__p100">
+        <dc:Bounds height="36.0" width="36.0" x="1728.0" y="432.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="91.0" x="1701.0" y="473.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_EndEvent_18" bpmnElement="Successful_EndEvent__prg__p100">
+        <dc:Bounds height="36.0" width="36.0" x="1728.0" y="330.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="81.0" x="1719.0" y="367.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_10" bpmnElement="EndSuccessFlow" sourceElement="_BPMNShape_ExclusiveGateway_4" targetElement="_BPMNShape_EndEvent_18">
+        <di:waypoint xsi:type="dc:Point" x="1429.0" y="349.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1579.0" y="349.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1579.0" y="348.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1728.0" y="348.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="27.0" x="1518.0" y="353.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_34" bpmnElement="EPG_BuildXML__prg__p50">
+        <dc:Bounds height="80.0" width="100.0" x="864.0" y="94.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_11" bpmnElement="EPG_SequenceFlow1" sourceElement="_BPMNShape_ExclusiveGateway_2" targetElement="_BPMNShape_ServiceTask_34">
+        <di:waypoint xsi:type="dc:Point" x="794.0" y="324.0"/>
+        <di:waypoint xsi:type="dc:Point" x="794.0" y="286.0"/>
+        <di:waypoint xsi:type="dc:Point" x="794.0" y="134.0"/>
+        <di:waypoint xsi:type="dc:Point" x="864.0" y="134.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="34.0" x="752.0" y="249.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_13" bpmnElement="EPG_SequenceFlow2" sourceElement="_BPMNShape_ServiceTask_34" targetElement="_BPMNShape_ExclusiveGateway_14">
+        <di:waypoint xsi:type="dc:Point" x="964.0" y="134.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1000.0" y="133.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="967.0" y="134.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_14" bpmnElement="PGW_SequenceFlow1" sourceElement="_BPMNShape_ExclusiveGateway_2" targetElement="_BPMNShape_ServiceTask_35">
+        <di:waypoint xsi:type="dc:Point" x="819.0" y="349.0"/>
+        <di:waypoint xsi:type="dc:Point" x="864.0" y="350.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="42.0" x="819.0" y="351.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_15" bpmnElement="PGW_SequenceFlow2" sourceElement="_BPMNShape_ServiceTask_35" targetElement="_BPMNShape_ExclusiveGateway_15">
+        <di:waypoint xsi:type="dc:Point" x="964.0" y="350.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1001.0" y="349.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="974.0" y="351.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_36" bpmnElement="SGW_BuildXML__prg__p50">
+        <dc:Bounds height="80.0" width="100.0" x="864.0" y="525.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_16" bpmnElement="SGW_SequenceFlow1" sourceElement="_BPMNShape_ExclusiveGateway_2" targetElement="_BPMNShape_ServiceTask_36">
+        <di:waypoint xsi:type="dc:Point" x="794.0" y="374.0"/>
+        <di:waypoint xsi:type="dc:Point" x="794.0" y="565.0"/>
+        <di:waypoint xsi:type="dc:Point" x="864.0" y="565.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="42.0" x="748.0" y="457.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_19" bpmnElement="SGW_SequenceFlow2" sourceElement="_BPMNShape_ServiceTask_36" targetElement="_BPMNShape_ExclusiveGateway_16">
+        <di:waypoint xsi:type="dc:Point" x="964.0" y="565.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1002.0" y="564.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="980.0" y="616.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_37" bpmnElement="OrderDetailsTask__prg__p10">
+        <dc:Bounds height="80.0" width="100.0" x="108.0" y="310.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_20" bpmnElement="SequenceFlow1" sourceElement="_BPMNShape_StartEvent_11" targetElement="_BPMNShape_ServiceTask_37">
+        <di:waypoint xsi:type="dc:Point" x="36.0" y="350.0"/>
+        <di:waypoint xsi:type="dc:Point" x="72.0" y="350.0"/>
+        <di:waypoint xsi:type="dc:Point" x="108.0" y="350.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="69.0" y="352.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ScriptTask_16" bpmnElement="BuildURLScript__prg__p20">
+        <dc:Bounds height="80.0" width="100.0" x="264.0" y="310.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_21" bpmnElement="SequenceFlow2" sourceElement="_BPMNShape_ServiceTask_37" targetElement="_BPMNShape_ScriptTask_16">
+        <di:waypoint xsi:type="dc:Point" x="208.0" y="350.0"/>
+        <di:waypoint xsi:type="dc:Point" x="264.0" y="350.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="233.0" y="350.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_38" bpmnElement="VMRestCallTask__prg__p30">
+        <dc:Bounds height="80.0" width="100.0" x="405.0" y="310.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_22" bpmnElement="SequenceFlow3" sourceElement="_BPMNShape_ScriptTask_16" targetElement="_BPMNShape_ServiceTask_38">
+        <di:waypoint xsi:type="dc:Point" x="364.0" y="350.0"/>
+        <di:waypoint xsi:type="dc:Point" x="405.0" y="350.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="382.0" y="352.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ScriptTask_17" bpmnElement="ExtractIPScript__prg__p40">
+        <dc:Bounds height="80.0" width="100.0" x="547.0" y="310.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_24" bpmnElement="SequenceFlow4" sourceElement="_BPMNShape_ServiceTask_38" targetElement="_BPMNShape_ScriptTask_17">
+        <di:waypoint xsi:type="dc:Point" x="505.0" y="350.0"/>
+        <di:waypoint xsi:type="dc:Point" x="547.0" y="350.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="493.0" y="350.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_25" bpmnElement="SequenceFlow5" sourceElement="_BPMNShape_ScriptTask_17" targetElement="_BPMNShape_ExclusiveGateway_2">
+        <di:waypoint xsi:type="dc:Point" x="647.0" y="350.0"/>
+        <di:waypoint xsi:type="dc:Point" x="769.0" y="349.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="637.0" y="349.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_39" bpmnElement="EPG_FTP__prg__p70">
+        <dc:Bounds height="80.0" width="100.0" x="1088.0" y="0.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_40" bpmnElement="PGW_BuildXML__prg__p50">
+        <dc:Bounds height="80.0" width="100.0" x="864.0" y="310.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_41" bpmnElement="PGW_FTP__prg__p70">
+        <dc:Bounds height="80.0" width="100.0" x="1088.0" y="216.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ScriptTask_31" bpmnElement="LogError__prg">
+        <dc:Bounds height="80.0" width="100.0" x="1512.0" y="410.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_2" bpmnElement="EndFailureFlow" sourceElement="_BPMNShape_ExclusiveGateway_4" targetElement="_BPMNShape_ScriptTask_31">
+        <di:waypoint xsi:type="dc:Point" x="1429.0" y="374.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1460.0" y="404.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1512.0" y="427.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="34.0" x="1456.0" y="472.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_3" bpmnElement="SequenceFlow_2" sourceElement="_BPMNShape_ScriptTask_31" targetElement="_BPMNShape_EndEvent_17">
+        <di:waypoint xsi:type="dc:Point" x="1612.0" y="450.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1728.0" y="450.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1667.0" y="450.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ScriptTask_38" bpmnElement="ScriptTask_2">
+        <dc:Bounds height="80.0" width="100.0" x="1355.0" y="220.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_4" bpmnElement="SequenceFlow_1" sourceElement="_BPMNShape_ServiceTask_26" targetElement="_BPMNShape_ScriptTask_38">
+        <di:waypoint xsi:type="dc:Point" x="1343.0" y="134.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1405.0" y="134.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1405.0" y="220.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1402.0" y="131.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_12" bpmnElement="SequenceFlow_3" sourceElement="_BPMNShape_ScriptTask_38" targetElement="_BPMNShape_ExclusiveGateway_4">
+        <di:waypoint xsi:type="dc:Point" x="1405.0" y="300.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1404.0" y="324.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1402.0" y="312.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_14" bpmnElement="ExclusiveGateway_1" isMarkerVisible="true">
+        <dc:Bounds height="50.0" width="50.0" x="1000.0" y="108.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="111.0" x="970.0" y="163.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_15" bpmnElement="ExclusiveGateway_2" isMarkerVisible="true">
+        <dc:Bounds height="50.0" width="50.0" x="1001.0" y="324.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="0.0" width="0.0" x="1026.0" y="379.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_1" bpmnElement="EPG_remote_flow" sourceElement="_BPMNShape_ExclusiveGateway_14" targetElement="_BPMNShape_ServiceTask_39">
+        <di:waypoint xsi:type="dc:Point" x="1025.0" y="108.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1025.0" y="40.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1088.0" y="40.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="46.0" x="1002.0" y="94.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_18" bpmnElement="PGW_remote_flow" sourceElement="_BPMNShape_ExclusiveGateway_15" targetElement="_BPMNShape_ServiceTask_41">
+        <di:waypoint xsi:type="dc:Point" x="1026.0" y="324.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1026.0" y="256.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1088.0" y="256.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="46.0" x="1003.0" y="312.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_23" bpmnElement="SequenceFlow_7" sourceElement="_BPMNShape_ServiceTask_41" targetElement="_BPMNShape_ServiceTask_27">
+        <di:waypoint xsi:type="dc:Point" x="1188.0" y="256.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1294.0" y="256.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1294.0" y="311.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1283.0" y="256.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_16" bpmnElement="ExclusiveGateway_3" isMarkerVisible="true">
+        <dc:Bounds height="50.0" width="50.0" x="1002.0" y="539.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="111.0" x="972.0" y="594.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_26" bpmnElement="SGW_remote_flow" sourceElement="_BPMNShape_ExclusiveGateway_16" targetElement="_BPMNShape_ServiceTask_24">
+        <di:waypoint xsi:type="dc:Point" x="1027.0" y="539.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1027.0" y="472.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1092.0" y="472.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="46.0" x="1004.0" y="530.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_27" bpmnElement="SequenceFlow_9" sourceElement="_BPMNShape_ServiceTask_24" targetElement="_BPMNShape_ServiceTask_28">
+        <di:waypoint xsi:type="dc:Point" x="1192.0" y="472.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1293.0" y="472.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1293.0" y="525.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1291.0" y="480.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_48" bpmnElement="EPG_LocalCopy__prg__p70">
+        <dc:Bounds height="80.0" width="100.0" x="1112.0" y="94.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_28" bpmnElement="SequenceFlow_10" sourceElement="_BPMNShape_ServiceTask_48" targetElement="_BPMNShape_ServiceTask_26">
+        <di:waypoint xsi:type="dc:Point" x="1212.0" y="134.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1243.0" y="134.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1231.0" y="130.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_29" bpmnElement="EPG_local_flow" sourceElement="_BPMNShape_ExclusiveGateway_14" targetElement="_BPMNShape_ServiceTask_48">
+        <di:waypoint xsi:type="dc:Point" x="1050.0" y="133.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1112.0" y="134.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="33.0" x="1047.0" y="133.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_49" bpmnElement="PGW_LocalCopy__prg__p70">
+        <dc:Bounds height="80.0" width="100.0" x="1112.0" y="310.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_50" bpmnElement="SGW_LocalCopy__prg__p70">
+        <dc:Bounds height="80.0" width="100.0" x="1112.0" y="525.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_30" bpmnElement="PGW_local_flow" sourceElement="_BPMNShape_ExclusiveGateway_15" targetElement="_BPMNShape_ServiceTask_49">
+        <di:waypoint xsi:type="dc:Point" x="1051.0" y="349.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1071.0" y="349.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1112.0" y="349.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="33.0" x="1056.0" y="349.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_31" bpmnElement="SequenceFlow_13" sourceElement="_BPMNShape_ServiceTask_49" targetElement="_BPMNShape_ServiceTask_27">
+        <di:waypoint xsi:type="dc:Point" x="1212.0" y="350.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1244.0" y="351.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1236.0" y="351.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_32" bpmnElement="SGW_local_flow" sourceElement="_BPMNShape_ExclusiveGateway_16" targetElement="_BPMNShape_ServiceTask_50">
+        <di:waypoint xsi:type="dc:Point" x="1052.0" y="564.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1072.0" y="564.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1112.0" y="564.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="33.0" x="1057.0" y="565.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_33" bpmnElement="SequenceFlow_15" sourceElement="_BPMNShape_ServiceTask_50" targetElement="_BPMNShape_ServiceTask_28">
+        <di:waypoint xsi:type="dc:Point" x="1212.0" y="565.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1243.0" y="565.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1235.0" y="566.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NFE Orchestration Demo</title>
+    <link href="node_modules/branding/css/assets.css" rel="stylesheet" type="text/css"/>
+    <link href="node_modules/branding/css/systemBar.css" rel="stylesheet" type="text/css">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script type="text/javascript" src="node_modules/jscore/require/require.js"></script>
+    <script type="text/javascript" src="config/require.config.js"></script>
+    <script>
+    require(['WfsDemo/WfsDemo'], function (App) {
+        var currentApp = new App();
+        var container = document.getElementById('Container');
+        container.innerHTML = '';
+        currentApp.start(container);
+    });
+    </script>
+</head>
+<body>
+    <div id="TopMenu">
+        <div class="ebSystemBar">
+            <div class="ebSystemBar-logo"></div>
+            <div class="ebSystemBar-topMenuName">NFE Orchestration Demos</div>
+        </div>
+    </div>
+</div>
+<div id="Container"></div>
+</body>
+</html>

@@ -1,0 +1,125 @@
+ {
+        "offer": {
+            "description": "EPG VDC OFFER",
+            "tenantName": "ALL",
+            "type": "vdc",
+            "offerItems": [
+                {
+                    "vdc": {
+                        "itemId": "ID-7a088614-94cf-4602-866a-2fb003e9fc17",
+                        "maxCardinality": 1,
+                        "minCardinality": 1,
+                        "vimZoneName": {
+                            "isNull": false,
+                            "isImmutable": false,
+                            "defaultValue": ""
+                        },
+                        "parentItemRef": "TOP_LEVEL",
+                        "name": {
+                            "isNull": false,
+                            "isImmutable": false,
+                            "defaultValue": "EPG-VDC"
+                        },
+                        "description": {
+                            "isNull": true,
+                            "isImmutable": false,
+                            "defaultValue": ""
+                        }
+                    }
+                },
+                {
+                    "vn": {
+                        "itemId": "ID-52ed8dc0-184b-4478-b192-7d5e6a951035",
+                        "maxCardinality": 1,
+                        "minCardinality": 1,
+                        "vnCategory": {
+                            "isNull": false,
+                            "isImmutable": true,
+                            "defaultValue": "Application"
+                        },
+                        "ipVersion": {
+                            "isNull": false,
+                            "isImmutable": false,
+                            "defaultValue": "IPv4"
+                        },
+                        "ipAddressRange": {
+                            "isNull": true,
+                            "isImmutable": false,
+                            "defaultValue": ""
+                        },
+                        "cidrSize": {
+                            "isNull": true,
+                            "isImmutable": false,
+                            "defaultValue": "24"
+                        },
+                        "dhcpEnabled": {
+                            "isNull": false,
+                            "isImmutable": false,
+                            "defaultValue": "true"
+                        },
+                        "parentItemRef": "ID-7a088614-94cf-4602-866a-2fb003e9fc17",
+                        "vdc": {
+                            "itemRef": "ID-7a088614-94cf-4602-866a-2fb003e9fc17"
+                        },
+                        "name": {
+                            "isNull": false,
+                            "isImmutable": false,
+                            "defaultValue": "EPG-Backplane-VN"
+                        },
+                        "description": {
+                            "isNull": true,
+                            "isImmutable": false,
+                            "defaultValue": ""
+                        },
+                        "enabled": {
+                            "isNull": false,
+                            "isImmutable": false,
+                            "defaultValue": "true"
+                        }
+                    }
+                },
+                
+               {
+                    "vrf": {
+                        "itemId": "ID-719e3cf1-faac-437b-862f-4a9f617372c6",
+                        "maxCardinality": 1,
+                        "minCardinality": 1,
+                        "parentItemRef": "ID-ea784c1e-9f84-4bb2-8edf-2f5b9b682507",
+                        "vdc": {
+                            "itemRef": "ID-7a088614-94cf-4602-866a-2fb003e9fc17"
+                        },
+                        "name": {
+                            "isNull": false,
+                            "isImmutable": false,
+                            "defaultValue": "EPG-VRF"
+                        },
+                        "externallyConnected": {
+                            "isNull": false,
+                            "isImmutable": false,
+                            "defaultValue": "true"
+                        }
+                    }
+                },
+                {
+                    "vrfVnic": {
+                        "itemId": "ID-0210b7ea-95a6-41cb-be4c-efaf28b2e078",
+                        "maxCardinality": 1,
+                        "minCardinality": 1,
+                        "parentItemRef": "ID-719e3cf1-faac-437b-862f-4a9f617372c6",
+                        "name": {
+                            "isNull": false,
+                            "isImmutable": false,
+                            "defaultValue": "EPG-VRFVNIC"
+                        },
+                        "vn": {
+                            "itemRef": "ID-ea784c1e-9f84-4bb2-8edf-2f5b9b682507"
+                        },
+                        "vrf": {
+                            "itemRef": "ID-719e3cf1-faac-437b-862f-4a9f617372c6"
+                        }
+                    }
+                }
+            ],
+            "name": "EPGVDCOFFER"
+        }
+    }

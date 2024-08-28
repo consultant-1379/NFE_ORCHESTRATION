@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE Model SYSTEM "/opt/ericsson/arne/etc/arne13_2.dtd">
+<Model version="1" importVersion="13.2">
+   <Create>
+	<FtpServer userLabel="ecs">
+         <FtpServerId string="ecs"/>
+         <ipAddress string="10.60.0.2"/>
+         <hostname string="ecs"/>
+         <dataPortId int="0"/>
+         <controlPortId int="0"/>
+         <directoryPath string="/var/opt/ericsson/nms_smo_srv/smo_file_store"/>
+         <serviceSecurityState string="ON"/>
+         <FtpService userLabel="ecs_u_sw">
+            <name string="ecs_u_sw"/>
+            <directoryPath string="/var/opt/ericsson/nms_smo_srv/smo_file_store/Software"/>
+            <type string="SwStore"/>
+            <networkType string="Utran"/>
+            <Tss>
+               <Entry>
+                  <System string="ecs_u_sw"/>
+                  <Type string="SECURE"/>
+                  <User string="ossftp"/>
+                  <Password string="oss123"/>
+               </Entry>
+               <Entry>
+                  <System string="ecs_u_sw"/>
+                  <Type string="NORMAL"/>
+                  <User string="ossftp"/>
+                  <Password string="oss123"/>
+               </Entry>
+            </Tss>
+         </FtpService>
+         <FtpService userLabel="ecs_u_lic">
+            <name string="ecs_u_lic"/>
+            <directoryPath string="/var/opt/ericsson/nms_smo_srv/smo_file_store/Lic"/>
+            <type string="LicenseKeyStore"/>
+            <networkType string="Utran"/>
+            <Tss>
+               <Entry>
+                  <System string="ecs_u_lic"/>
+                  <Type string="NORMAL"/>
+                  <User string="ossftp"/>
+                  <Password string="oss123"/>
+               </Entry>
+               <Entry>
+                  <System string="ecs_u_lic"/>
+                  <Type string="SECURE"/>
+                  <User string="ossftp"/>
+                  <Password string="oss123"/>
+               </Entry>
+            </Tss>
+         </FtpService>
+         <FtpService userLabel="ecs_bk">
+            <name string="ecs_bk"/>
+            <directoryPath string="/var/opt/ericsson/nms_smo_srv/smo_file_store/Backup"/>
+            <type string="BackupStore"/>
+            <networkType string="Utran"/>
+            <Tss>
+               <Entry>
+                  <System string="ecs_bk"/>
+                  <Type string="SECURE"/>
+                  <User string="ossftp"/>
+                  <Password string="oss123"/>
+               </Entry>
+               <Entry>
+                  <System string="ecs_bk"/>
+                  <Type string="NORMAL"/>
+                  <User string="ossftp"/>
+                  <Password string="oss123"/>
+               </Entry>
+            </Tss>
+         </FtpService>
+	</FtpServer>
+      <Site userLabel="LMC">
+         <altitude string="0"/>
+         <location string="Montreal"/>
+         <longitude string="0"/>
+         <latitude string="0"/>
+         <worldTimeZoneId string="EST"/>
+         <freeText string="where the  bridge falls "/>
+         <datum string="wgs84"/>
+      </Site>
+      <ManagedElement sourceType="M120">
+         <ManagedElementId string="EPG"/>
+         <primaryType type="EPG"/>
+         <managedElementType types="Servinggw"/>
+         <associatedSite string="Site=LMC"/>
+         <nodeVersion string="13A"/>
+         <platformVersion string=""/>
+         <swVersion string=""/>
+         <vendorName string=""/>
+         <userDefinedState string=""/>
+         <managedServiceAvailability int="1"/>
+         <isManaged boolean="true"/>
+         <connectionStatus string="ON"/>
+         <Connectivity>
+            <DEFAULT>
+               <emUrl url="https://10.100.0.1"/>
+               <ipAddress string="${vmip}"/>
+               <oldIpAddress string=""/>
+               <hostname string="epg1"/>
+               <nodeSecurityState state="OFF"/>
+               <boardId string=""/>
+               <Protocol number="0">
+                  <protocolType string="TELNET"/>
+                  <port int="2023"/>
+                  <protocolVersion string=""/>
+                  <securityName string=""/>
+                  <authenticationMethod string=""/>
+                  <encryptionMethod string=""/>
+                  <communityString string=""/>
+                  <context string=""/>
+                  <namingUrl string=""/>
+                  <namingPort int=""/>
+                  <notificationIRPAgentVersion string=""/>
+                  <alarmIRPAgentVersion string=""/>
+                  <notificationIRPNamingContext context=""/>
+                  <alarmIRPNamingContext context=""/>
+               </Protocol>
+               <Protocol number="1">
+                  <protocolType string="SNMP"/>
+                  <port int="161"/>
+                  <protocolVersion string="2C"/>
+                  <securityName string=""/>
+                  <authenticationMethod string=""/>
+                  <encryptionMethod string=""/>
+                  <communityString string="public"/>
+                  <context string=""/>
+                  <namingUrl string=""/>
+                  <namingPort int=""/>
+                  <notificationIRPAgentVersion string=""/>
+                  <alarmIRPAgentVersion string=""/>
+                  <notificationIRPNamingContext context=""/>
+                  <alarmIRPNamingContext context=""/>
+               </Protocol>
+               <Protocol number="2">
+                  <protocolType string="SSH"/>
+                  <port int="22"/>
+                  <protocolVersion string=""/>
+                  <securityName string=""/>
+                  <authenticationMethod string=""/>
+                  <encryptionMethod string=""/>
+                  <communityString string=""/>
+                  <context string=""/>
+                  <namingUrl string=""/>
+                  <namingPort int=""/>
+                  <notificationIRPAgentVersion string=""/>
+                  <alarmIRPAgentVersion string=""/>
+                  <notificationIRPNamingContext context=""/>
+                  <alarmIRPNamingContext context=""/>
+               </Protocol>
+               <Protocol number="3">
+                  <protocolType string="FTP"/>
+                  <port int="21"/>
+                  <protocolVersion string=""/>
+                  <securityName string=""/>
+                  <authenticationMethod string=""/>
+                  <encryptionMethod string=""/>
+                  <communityString string=""/>
+                  <context string=""/>
+                  <namingUrl string=""/>
+                  <namingPort int=""/>
+                  <notificationIRPAgentVersion string=""/>
+                  <alarmIRPAgentVersion string=""/>
+                  <notificationIRPNamingContext context=""/>
+                  <alarmIRPNamingContext context=""/>
+               </Protocol>
+               <Protocol number="4">
+                  <protocolType string="SFTP"/>
+                  <port int="22"/>
+                  <protocolVersion string=""/>
+                  <securityName string=""/>
+                  <authenticationMethod string=""/>
+                  <encryptionMethod string=""/>
+                  <communityString string=""/>
+                  <context string=""/>
+                  <namingUrl string=""/>
+                  <namingPort int=""/>
+                  <notificationIRPAgentVersion string=""/>
+                  <alarmIRPAgentVersion string=""/>
+                  <notificationIRPNamingContext context=""/>
+                  <alarmIRPNamingContext context=""/>
+               </Protocol>
+               <Browser>
+                  <browser string=""/>
+                  <browserURL string=""/>
+                  <bookname string=""/>
+               </Browser>
+            </DEFAULT>
+         </Connectivity>
+         <Tss>
+            <Entry>
+               <System string="EPG"/>
+               <Type string="NORMAL"/>
+               <User string="erv"/>
+               <Password string="ggsn"/>
+            </Entry>
+            <Entry>
+               <System string="EPG"/>
+               <Type string="ROOT"/>
+               <User string="root"/>
+               <Password string="a"/>
+            </Entry>
+            <Entry>
+               <System string="EPG"/>
+               <Type string="SECURE"/>
+               <User string="erv"/>
+               <Password string="ggsn"/>
+            </Entry>
+         </Tss>
+         <Relationship>
+            <AssociableNode TO_FDN="FtpServer=ecs,FtpService=ecs_bk" AssociationType="ManagedElement_to_ftpBackupStore"/>
+            <AssociableNode TO_FDN="ManagementNode=ONRM" AssociationType="MgmtAssociation"/>
+         </Relationship>
+      </ManagedElement>
+   </Create>
+</Model>

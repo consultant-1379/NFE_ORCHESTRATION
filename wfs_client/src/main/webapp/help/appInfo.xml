@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<concept id="WfsDemo-AppInfo">
+    <title>AppInfo</title>
+    <conbody>
+        <dl>
+            <dlentry id="appName">
+                <dt>App</dt>
+                <dd>WfsDemo</dd>
+            </dlentry>
+            <dlentry id="version">
+                <dt>Version</dt>
+                <dd>{{version}}</dd>
+            </dlentry>
+            <dlentry id="link">
+                <dt>App Link</dt>
+                <dd>#wfsDemo</dd>
+            </dlentry>
+        </dl>
+    </conbody>
+</concept>

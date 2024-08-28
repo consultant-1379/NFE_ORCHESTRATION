@@ -1,0 +1,7 @@
+*.classes
+*/target/*
+*/.settings/
+/target
+/.classpath
+/.project
+/sample.xml

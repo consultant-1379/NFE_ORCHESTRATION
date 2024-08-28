@@ -1,0 +1,45 @@
+{
+    "modelType": "model1",
+    "submitText": "Submit",
+    "cancelText": "Cancel",
+    "controlGroups":
+        [
+        	{ "controlGroup": { "name": "IVDCName", "label": "IVDCName", "type": "text",
+                "controls": [
+                    { "variable": { "type": "string", "name": "VDCName", "readonly": false, "required": true}}
+                ]}},
+				
+            { "controlGroup": { "name": "InstanceType", "label": "Instance Type", "type": "select",
+                "controls": [
+                    { "variable": { "type": "string", "name": "instanceType", "readonly": false},
+                      "initialValue": { "source": "local", "values": ["EPG", "PGW","SGW"] } }
+                ]}},
+                  { "controlGroup": { "name": "InstanceSize", "label": "Instance Size", "type": "select",
+                "controls": [
+                    { "variable": { "type": "string", "name": "instanceSize", "readonly": false},
+                      "initialValue": { "source": "local", "values": ["TINY", "SMALL","BIG"] } }
+                ]}},
+                { "controlGroup": { "name": "FTP", "label": "Auto FTP config", "type": "select",
+                "controls": [
+                    { "variable": { "type": "string", "name": "autoFTPconfig", "readonly": false},
+                      "initialValue": { "source": "local", "values": ["yes", "no","AskLater"] } }
+                ]}} ,
+                { "controlGroup": { "name": "addvms", "label": "Auto add all vms ", "type": "select",
+                "controls": [
+                    { "variable": { "type": "string", "name": "addvms", "readonly": false},
+                      "initialValue": { "source": "local", "values": ["yes", "no","AskLater"] } }
+                ]}} 
+                 ,
+                { "controlGroup": { "name": "extremswitch", "label": "Auto update extreme switch ", "type": "select",
+                "controls": [
+                    { "variable": { "type": "string", "name": "autoextreme", "readonly": false},
+                      "initialValue": { "source": "local", "values": ["yes", "no","AskLater"] } }
+                ]}} 
+                 ,
+                { "controlGroup": { "name": "deploymentMode", "label": "Running local or remote to OSS", "type": "select",
+                "controls": [
+                    { "variable": { "type": "string", "name": "deploymentMode", "readonly": false},
+                      "initialValue": { "source": "local", "values": ["remote", "local"] } }
+                ]}}
+        ]
+}

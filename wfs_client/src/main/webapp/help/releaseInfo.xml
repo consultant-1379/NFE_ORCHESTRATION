@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<concept id="MyApp-ReleaseInfo">
+    <title>ReleaseInfo</title>
+    <conbody>
+        <section>
+            <title>Features</title>
+            <p>
+               Some features.
+            </p>
+        </section>
+    </conbody>
+</concept>

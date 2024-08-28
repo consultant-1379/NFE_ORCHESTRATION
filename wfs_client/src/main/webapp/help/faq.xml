@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<concept id="MyApp-Faq">
+    <title>Frequently Asked Questions</title>
+    <conbody>
+        <section>
+            <title>Question?</title>
+            <p>
+                Answer.
+            </p>
+        </section>
+        <section>
+            <title>Question?
+            </title>
+            <p>
+                Answer.
+            </p>
+        </section>
+    </conbody>
+</concept>

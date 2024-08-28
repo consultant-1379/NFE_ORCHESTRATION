@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://activiti.org/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd" id="_1m9MgLmZEeOLV91ljeXH9A" targetNamespace="http://activiti.org/bpmn">
+  <bpmn2:process id="nfe_e2e" name="nfe_e2e" isExecutable="true">
+    <bpmn2:callActivity id="CreateVDC_RESTCall__prg__p10" name="Create VDC &#xA;REST Call" calledElement="createVDC">
+      <bpmn2:extensionElements>
+        <camunda:in variables="all"/>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_1</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_7</bpmn2:outgoing>
+    </bpmn2:callActivity>
+    <bpmn2:callActivity id="CreateNFS_RESTCall__prg__p20" name="Create NFS VM&#xA;REST call" calledElement="createnfsvms">
+      <bpmn2:extensionElements>
+        <camunda:out variables="all"/>
+        <camunda:in variables="all"/>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_7</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_3</bpmn2:outgoing>
+    </bpmn2:callActivity>
+    <bpmn2:sequenceFlow id="SequenceFlow_3" name="" sourceRef="CreateNFS_RESTCall__prg__p20" targetRef="UpdateONRMCall__prg__p30"/>
+    <bpmn2:startEvent id="StartEvent__prg__p0" camunda:formKey="embedded:app:json:model1:forms/input.json" name="Start">
+      <bpmn2:outgoing>SequenceFlow_1</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_1" name="" sourceRef="StartEvent__prg__p0" targetRef="CreateVDC_RESTCall__prg__p10"/>
+    <bpmn2:sequenceFlow id="SequenceFlow_7" name="" sourceRef="CreateVDC_RESTCall__prg__p10" targetRef="CreateNFS_RESTCall__prg__p20"/>
+    <bpmn2:boundaryEvent id="BoundaryEvent_6" name="" attachedToRef="CreateNFS_RESTCall__prg__p20">
+      <bpmn2:outgoing>SequenceFlow_6</bpmn2:outgoing>
+      <bpmn2:errorEventDefinition id="ErrorEventDefinition_3" errorRef="Error_1"/>
+    </bpmn2:boundaryEvent>
+    <bpmn2:boundaryEvent id="BoundaryEvent_7" name="" attachedToRef="CreateVDC_RESTCall__prg__p10">
+      <bpmn2:outgoing>SequenceFlow_10</bpmn2:outgoing>
+      <bpmn2:errorEventDefinition id="ErrorEventDefinition_4"/>
+    </bpmn2:boundaryEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_6" name="" sourceRef="BoundaryEvent_6" targetRef="DeleteVMsVDCs__prg__p90"/>
+    <bpmn2:callActivity id="DeleteVMsVDCs__prg__p90" name="  Delete VMS &#xA;and VDCs" isForCompensation="true" calledElement="delete_resources">
+      <bpmn2:incoming>SequenceFlow_6</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_8</bpmn2:outgoing>
+    </bpmn2:callActivity>
+    <bpmn2:sequenceFlow id="SequenceFlow_8" name="" sourceRef="DeleteVMsVDCs__prg__p90" targetRef="End2__prg__p100"/>
+    <bpmn2:endEvent id="End2__prg__p100" name="End Error Handling">
+      <bpmn2:incoming>SequenceFlow_8</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:endEvent id="End3__prg__p100" name="End Error Handling">
+      <bpmn2:incoming>SequenceFlow_9</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_10" name="" sourceRef="BoundaryEvent_7" targetRef="LogError1__prg__p90"/>
+    <bpmn2:scriptTask id="LogError1__prg__p90" name="Log Error" scriptFormat="groovy">
+      <bpmn2:incoming>SequenceFlow_10</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_11</bpmn2:outgoing>
+      <bpmn2:script><![CDATA[org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("com.ericsson.oss.nfe.poc.tasks"); 
+logger.info( '------------------------------------ ~~ Compensating Create VDC Error~~----------------------------------');]]></bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_11" name="" sourceRef="LogError1__prg__p90" targetRef="End1__prg__p100"/>
+    <bpmn2:endEvent id="End1__prg__p100" name="End Error Handling">
+      <bpmn2:incoming>SequenceFlow_11</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:boundaryEvent id="BoundaryEvent_1" name="" attachedToRef="UpdateONRMCall__prg__p30">
+      <bpmn2:outgoing>SequenceFlow_2</bpmn2:outgoing>
+      <bpmn2:errorEventDefinition id="ErrorEventDefinition_1"/>
+    </bpmn2:boundaryEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_2" name="" sourceRef="BoundaryEvent_1" targetRef="DeleteONRM__prg__p90"/>
+    <bpmn2:callActivity id="UpdateONRMCall__prg__p30" name="ONRM Call" calledElement="updateonrm">
+      <bpmn2:extensionElements>
+        <camunda:in variables="all"/>
+        <camunda:out variables="all"/>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_3</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_12</bpmn2:outgoing>
+    </bpmn2:callActivity>
+    <bpmn2:sequenceFlow id="SequenceFlow_12" name="" sourceRef="UpdateONRMCall__prg__p30" targetRef="ExclusiveGateway_1__prg"/>
+    <bpmn2:callActivity id="DeleteONRM__prg__p90" name="Delete ONRM Config" isForCompensation="true" calledElement="DeleteEPGfromONRM">
+      <bpmn2:extensionElements>
+        <camunda:in variables="all"/>
+        <camunda:out variables="all"/>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_2</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_9</bpmn2:outgoing>
+    </bpmn2:callActivity>
+    <bpmn2:sequenceFlow id="SequenceFlow_9" name="" sourceRef="DeleteONRM__prg__p90" targetRef="End3__prg__p100"/>
+    <bpmn2:endEvent id="EndEvent__prg__p100" name="end">
+      <bpmn2:incoming>SequenceFlow_5</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:callActivity id="CreateEPGVMs__prg__p60" name="Create EPGVMS" calledElement="createepgvms">
+      <bpmn2:extensionElements>
+        <camunda:in variables="all"/>
+        <camunda:out variables="all"/>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>yes</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_18</bpmn2:outgoing>
+    </bpmn2:callActivity>
+    <bpmn2:sequenceFlow id="SequenceFlow_18" name="" sourceRef="CreateEPGVMs__prg__p60" targetRef="ConfigureNFS_VMs__prg__p80"/>
+    <bpmn2:exclusiveGateway id="CreateAllVMs__prg" default="no_answer">
+      <bpmn2:incoming>SequenceFlow_13</bpmn2:incoming>
+      <bpmn2:incoming>SequenceFlow_14_alreadyanswered</bpmn2:incoming>
+      <bpmn2:outgoing>yes</bpmn2:outgoing>
+      <bpmn2:outgoing>no_answer</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="yes" name="Yes" sourceRef="CreateAllVMs__prg" targetRef="CreateEPGVMs__prg__p60">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression"><![CDATA[${(execution.getVariable('createAll')!=null && execution.getVariable('createAll')==true) || (execution.getVariable('addvms')!=null && execution.getVariable('addvms')=="yes")}]]></bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="no_answer" name="No" sourceRef="CreateAllVMs__prg" targetRef="ConfigureNFS_VMs__prg__p80"/>
+    <bpmn2:endEvent id="End4__prg__p100" name="End Error Handling">
+      <bpmn2:incoming>SequenceFlow_20</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:callActivity id="ConfigureNFS_VMs__prg__p80" name="Configure NFS VM" calledElement="copyConfigFilesm">
+      <bpmn2:extensionElements>
+        <camunda:in variables="all"/>
+        <camunda:out variables="all"/>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>no_answer</bpmn2:incoming>
+      <bpmn2:incoming>SequenceFlow_18</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_17</bpmn2:outgoing>
+    </bpmn2:callActivity>
+    <bpmn2:sequenceFlow id="SequenceFlow_17" name="" sourceRef="ConfigureNFS_VMs__prg__p80" targetRef="ExtremeSwitchCall__prg__p90"/>
+    <bpmn2:callActivity id="DeleteEPGVMsVDCs__prg__p90" name="Delete VMS and VDCs" isForCompensation="true" calledElement="delete_resources">
+      <bpmn2:incoming>SequenceFlow_19</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_20</bpmn2:outgoing>
+    </bpmn2:callActivity>
+    <bpmn2:sequenceFlow id="SequenceFlow_20" name="" sourceRef="DeleteEPGVMsVDCs__prg__p90" targetRef="End4__prg__p100"/>
+    <bpmn2:callActivity id="ExtremeSwitchCall__prg__p90" name="Extreme Switch Call" calledElement="updateextremeswitch">
+      <bpmn2:extensionElements>
+        <camunda:in variables="all"/>
+        <camunda:out variables="all"/>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_17</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_5</bpmn2:outgoing>
+    </bpmn2:callActivity>
+    <bpmn2:sequenceFlow id="SequenceFlow_5" name="" sourceRef="ExtremeSwitchCall__prg__p90" targetRef="EndEvent__prg__p100"/>
+    <bpmn2:boundaryEvent id="BoundaryEvent_2" name="" attachedToRef="CreateEPGVMs__prg__p60">
+      <bpmn2:outgoing>SequenceFlow_19</bpmn2:outgoing>
+      <bpmn2:errorEventDefinition id="ErrorEventDefinition_2"/>
+    </bpmn2:boundaryEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_19" name="" sourceRef="BoundaryEvent_2" targetRef="DeleteEPGVMsVDCs__prg__p90"/>
+    <bpmn2:userTask id="UserTask_CreateAllVMs__prg__p40" camunda:formKey="embedded:app:json:model1:forms/addvm-userconfirmation.json" name="Should Create All VM?">
+      <bpmn2:incoming>SequenceFlow_4</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_13</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_13" name="" sourceRef="UserTask_CreateAllVMs__prg__p40" targetRef="CreateAllVMs__prg"/>
+    <bpmn2:exclusiveGateway id="ExclusiveGateway_1__prg" name="Create Automatically" default="SequenceFlow_4">
+      <bpmn2:incoming>SequenceFlow_12</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_4</bpmn2:outgoing>
+      <bpmn2:outgoing>SequenceFlow_14_alreadyanswered</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="SequenceFlow_4" name="" sourceRef="ExclusiveGateway_1__prg" targetRef="UserTask_CreateAllVMs__prg__p40"/>
+    <bpmn2:sequenceFlow id="SequenceFlow_14_alreadyanswered" name="" sourceRef="ExclusiveGateway_1__prg" targetRef="CreateAllVMs__prg">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression"><![CDATA[${execution.getVariable('addvms') != null && execution.getVariable('addvms') != "AskLater"}]]></bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+  </bpmn2:process>
+  <bpmn2:error id="Error_1" errorCode="java.lang.RuntimeException" name="err"/>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="nfe_e2e">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_7" bpmnElement="StartEvent__prg__p0">
+        <dc:Bounds height="36.0" width="36.0" x="60.0" y="300.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="34.0" x="61.0" y="341.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_CallActivity_4" bpmnElement="CreateVDC_RESTCall__prg__p10">
+        <dc:Bounds height="80.0" width="100.0" x="204.0" y="278.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_1" bpmnElement="SequenceFlow_1" sourceElement="_BPMNShape_StartEvent_7" targetElement="_BPMNShape_CallActivity_4">
+        <di:waypoint xsi:type="dc:Point" x="96.0" y="318.0"/>
+        <di:waypoint xsi:type="dc:Point" x="204.0" y="318.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="118.0" y="318.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_CallActivity_5" bpmnElement="CreateNFS_RESTCall__prg__p20">
+        <dc:Bounds height="80.0" width="100.0" x="456.0" y="278.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_CallActivity_6" bpmnElement="UpdateONRMCall__prg__p30">
+        <dc:Bounds height="80.0" width="100.0" x="704.0" y="279.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_CallActivity_7" bpmnElement="ExtremeSwitchCall__prg__p90">
+        <dc:Bounds height="80.0" width="100.0" x="1584.0" y="281.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_EndEvent_10" bpmnElement="EndEvent__prg__p100">
+        <dc:Bounds height="36.0" width="36.0" x="1734.0" y="303.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="27.0" x="1739.0" y="344.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_5" bpmnElement="SequenceFlow_5" sourceElement="_BPMNShape_CallActivity_7" targetElement="_BPMNShape_EndEvent_10">
+        <di:waypoint xsi:type="dc:Point" x="1684.0" y="321.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1734.0" y="321.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1706.0" y="321.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_3" bpmnElement="SequenceFlow_3" sourceElement="_BPMNShape_CallActivity_5" targetElement="_BPMNShape_CallActivity_6">
+        <di:waypoint xsi:type="dc:Point" x="556.0" y="318.0"/>
+        <di:waypoint xsi:type="dc:Point" x="704.0" y="319.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="611.0" y="318.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_7" bpmnElement="SequenceFlow_7" sourceElement="_BPMNShape_CallActivity_4" targetElement="_BPMNShape_CallActivity_5">
+        <di:waypoint xsi:type="dc:Point" x="304.0" y="318.0"/>
+        <di:waypoint xsi:type="dc:Point" x="456.0" y="318.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_BoundaryEvent_20" bpmnElement="BoundaryEvent_6">
+        <dc:Bounds height="36.0" width="36.0" x="490.0" y="340.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_EndEvent_28" bpmnElement="End2__prg__p100">
+        <dc:Bounds height="36.0" width="36.0" x="490.0" y="588.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="0.0" width="0.0" x="508.0" y="629.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_BoundaryEvent_21" bpmnElement="BoundaryEvent_7">
+        <dc:Bounds height="36.0" width="36.0" x="234.0" y="340.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_EndEvent_30" bpmnElement="End1__prg__p100">
+        <dc:Bounds height="36.0" width="36.0" x="234.0" y="588.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="116.0" x="194.0" y="629.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_CallActivity_8" bpmnElement="DeleteVMsVDCs__prg__p90">
+        <dc:Bounds height="80.0" width="100.0" x="458.0" y="441.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_6" bpmnElement="SequenceFlow_6" sourceElement="_BPMNShape_BoundaryEvent_20" targetElement="_BPMNShape_CallActivity_8">
+        <di:waypoint xsi:type="dc:Point" x="508.0" y="376.0"/>
+        <di:waypoint xsi:type="dc:Point" x="508.0" y="441.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="505.0" y="409.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_8" bpmnElement="SequenceFlow_8" sourceElement="_BPMNShape_CallActivity_8" targetElement="_BPMNShape_EndEvent_28">
+        <di:waypoint xsi:type="dc:Point" x="508.0" y="521.0"/>
+        <di:waypoint xsi:type="dc:Point" x="508.0" y="588.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="505.0" y="553.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_BoundaryEvent_22" bpmnElement="BoundaryEvent_1">
+        <dc:Bounds height="36.0" width="36.0" x="732.0" y="341.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="747.0" y="382.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_CallActivity_9" bpmnElement="DeleteONRM__prg__p90">
+        <dc:Bounds height="80.0" width="100.0" x="700.0" y="441.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_2" bpmnElement="SequenceFlow_2" sourceElement="_BPMNShape_BoundaryEvent_22" targetElement="_BPMNShape_CallActivity_9">
+        <di:waypoint xsi:type="dc:Point" x="750.0" y="377.0"/>
+        <di:waypoint xsi:type="dc:Point" x="750.0" y="441.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="747.0" y="409.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_EndEvent_34" bpmnElement="End3__prg__p100">
+        <dc:Bounds height="36.0" width="36.0" x="736.0" y="588.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="0.0" width="0.0" x="754.0" y="629.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_9" bpmnElement="SequenceFlow_9" sourceElement="_BPMNShape_CallActivity_9" targetElement="_BPMNShape_EndEvent_34">
+        <di:waypoint xsi:type="dc:Point" x="750.0" y="521.0"/>
+        <di:waypoint xsi:type="dc:Point" x="750.0" y="554.0"/>
+        <di:waypoint xsi:type="dc:Point" x="754.0" y="554.0"/>
+        <di:waypoint xsi:type="dc:Point" x="754.0" y="588.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="747.0" y="546.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ScriptTask_36" bpmnElement="LogError1__prg__p90">
+        <dc:Bounds height="80.0" width="100.0" x="202.0" y="432.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_10" bpmnElement="SequenceFlow_10" sourceElement="_BPMNShape_BoundaryEvent_21" targetElement="_BPMNShape_ScriptTask_36">
+        <di:waypoint xsi:type="dc:Point" x="252.0" y="376.0"/>
+        <di:waypoint xsi:type="dc:Point" x="252.0" y="432.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="249.0" y="405.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_11" bpmnElement="SequenceFlow_11" sourceElement="_BPMNShape_ScriptTask_36" targetElement="_BPMNShape_EndEvent_30">
+        <di:waypoint xsi:type="dc:Point" x="252.0" y="512.0"/>
+        <di:waypoint xsi:type="dc:Point" x="252.0" y="588.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="249.0" y="536.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_UserTask_2" bpmnElement="UserTask_CreateAllVMs__prg__p40">
+        <dc:Bounds height="80.0" width="100.0" x="984.0" y="278.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_12" bpmnElement="SequenceFlow_12" sourceElement="_BPMNShape_CallActivity_6" targetElement="_BPMNShape_ExclusiveGateway_17">
+        <di:waypoint xsi:type="dc:Point" x="804.0" y="319.0"/>
+        <di:waypoint xsi:type="dc:Point" x="832.0" y="319.0"/>
+        <di:waypoint xsi:type="dc:Point" x="832.0" y="318.0"/>
+        <di:waypoint xsi:type="dc:Point" x="860.0" y="318.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="826.0" y="319.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_11" bpmnElement="CreateAllVMs__prg" isMarkerVisible="true">
+        <dc:Bounds height="50.0" width="50.0" x="1128.0" y="296.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="0.0" width="0.0" x="1153.0" y="351.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_13" bpmnElement="SequenceFlow_13" sourceElement="_BPMNShape_UserTask_2" targetElement="_BPMNShape_ExclusiveGateway_11">
+        <di:waypoint xsi:type="dc:Point" x="1084.0" y="318.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1106.0" y="318.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1106.0" y="321.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1128.0" y="321.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1103.0" y="321.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_CallActivity_10" bpmnElement="CreateEPGVMs__prg__p60">
+        <dc:Bounds height="80.0" width="100.0" x="1224.0" y="444.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_14" bpmnElement="yes" sourceElement="_BPMNShape_ExclusiveGateway_11" targetElement="_BPMNShape_CallActivity_10">
+        <di:waypoint xsi:type="dc:Point" x="1153.0" y="346.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1153.0" y="484.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1224.0" y="484.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="29.0" x="1139.0" y="371.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_CallActivity_11" bpmnElement="ConfigureNFS_VMs__prg__p80">
+        <dc:Bounds height="80.0" width="100.0" x="1416.0" y="282.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_16" bpmnElement="no_answer" sourceElement="_BPMNShape_ExclusiveGateway_11" targetElement="_BPMNShape_CallActivity_11">
+        <di:waypoint xsi:type="dc:Point" x="1178.0" y="321.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1416.0" y="322.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="22.0" x="1192.0" y="321.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_17" bpmnElement="SequenceFlow_17" sourceElement="_BPMNShape_CallActivity_11" targetElement="_BPMNShape_CallActivity_7">
+        <di:waypoint xsi:type="dc:Point" x="1516.0" y="322.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1584.0" y="321.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1673.0" y="324.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_18" bpmnElement="SequenceFlow_18" sourceElement="_BPMNShape_CallActivity_10" targetElement="_BPMNShape_CallActivity_11">
+        <di:waypoint xsi:type="dc:Point" x="1324.0" y="484.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1370.0" y="484.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1370.0" y="321.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1416.0" y="321.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1487.0" y="450.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_BoundaryEvent_23" bpmnElement="BoundaryEvent_2">
+        <dc:Bounds height="36.0" width="36.0" x="1257.0" y="506.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1272.0" y="547.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ScriptTask_37" bpmnElement="DeleteEPGVMsVDCs__prg__p90">
+        <dc:Bounds height="80.0" width="100.0" x="1225.0" y="573.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_19" bpmnElement="SequenceFlow_19" sourceElement="_BPMNShape_BoundaryEvent_23" targetElement="_BPMNShape_ScriptTask_37">
+        <di:waypoint xsi:type="dc:Point" x="1275.0" y="542.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1275.0" y="573.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1392.0" y="545.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_EndEvent_35" bpmnElement="End4__prg__p100">
+        <dc:Bounds height="36.0" width="36.0" x="1416.0" y="595.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="115.0" x="1377.0" y="636.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_20" bpmnElement="SequenceFlow_20" sourceElement="_BPMNShape_ScriptTask_37" targetElement="_BPMNShape_EndEvent_35">
+        <di:waypoint xsi:type="dc:Point" x="1325.0" y="613.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1416.0" y="613.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1347.0" y="613.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_17" bpmnElement="ExclusiveGateway_1__prg" isMarkerVisible="true">
+        <dc:Bounds height="50.0" width="50.0" x="860.0" y="293.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="0.0" width="0.0" x="885.0" y="348.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_4" bpmnElement="SequenceFlow_4" sourceElement="_BPMNShape_ExclusiveGateway_17" targetElement="_BPMNShape_UserTask_2">
+        <di:waypoint xsi:type="dc:Point" x="910.0" y="318.0"/>
+        <di:waypoint xsi:type="dc:Point" x="984.0" y="318.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_15" bpmnElement="SequenceFlow_14_alreadyanswered" sourceElement="_BPMNShape_ExclusiveGateway_17" targetElement="_BPMNShape_ExclusiveGateway_11">
+        <di:waypoint xsi:type="dc:Point" x="902.0" y="293.0"/>
+        <di:waypoint xsi:type="dc:Point" x="957.0" y="209.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1084.0" y="209.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1138.0" y="296.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="965.0" y="209.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

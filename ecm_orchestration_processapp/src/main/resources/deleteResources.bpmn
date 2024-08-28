@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://activiti.org/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd" id="_hdIPsMPaEeOV7tWYlGoq-A" targetNamespace="http://activiti.org/bpmn">
+  <bpmn2:process id="delete_resources" name="delete_resources" isExecutable="true">
+    <bpmn2:extensionElements>
+      <camunda:executionListener class="com.ericsson.oss.nfe.poc.listeners.AppConfigLoader" event="start"/>
+    </bpmn2:extensionElements>
+    <bpmn2:scriptTask id="PopulateURLs__prg__p10" name="PopulateURLs" scriptFormat="groovy">
+      <bpmn2:incoming>SequenceFlow_10_empty</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_5</bpmn2:outgoing>
+      <bpmn2:script><![CDATA[def url = execution.getVariable('appConfigProps')['QUERY_VDC_FOR_TENANT']
+def tenantName = execution.getVariable('appConfigProps')['ecm.props.map.tenantName']
+execution.setVariable("GET_VDC_URL",url+"tenantName%3D'"+tenantName+"'");]]></bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_5" name="" sourceRef="PopulateURLs__prg__p10" targetRef="GetVDC_RESTCall__prg__p20"/>
+    <bpmn2:exclusiveGateway id="ChooseOption__prg" name="Should Delete ?" default="SequenceFlow_2_no">
+      <bpmn2:incoming>SequenceFlow_1</bpmn2:incoming>
+      <bpmn2:incoming>SequenceFlow_4</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_3</bpmn2:outgoing>
+      <bpmn2:outgoing>SequenceFlow_2_no</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="SequenceFlow_3" name="Yes" sourceRef="ChooseOption__prg" targetRef="DeleteVM__prg__p70">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression"><![CDATA[ ${execution.getVariable("YesDelete")!=null && YesDelete}]]></bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="SequenceFlow_2_no" name="No" sourceRef="ChooseOption__prg" targetRef="LogNo__prg__p90"/>
+    <bpmn2:scriptTask id="LogNo__prg__p90" name="Log No" scriptFormat="groovy">
+      <bpmn2:incoming>SequenceFlow_2_no</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_6</bpmn2:outgoing>
+      <bpmn2:script><![CDATA[org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("com.ericsson.oss.nfe.poc.tasks"); 
+logger.info('Use cancelled delete of VDC : '+execution.getVariable('delVdcNameId') +' in the cleanup flow');]]></bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_6" name="" sourceRef="LogNo__prg__p90" targetRef="End__prg__p100"/>
+    <bpmn2:serviceTask id="DeleteVM__prg__p70" camunda:class="com.ericsson.oss.nfe.poc.tasks.DeleteVMS" name="Delete VMs">
+      <bpmn2:incoming>SequenceFlow_3</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_8</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:serviceTask id="GetVDC_RESTCall__prg__p20" camunda:class="com.ericsson.oss.nfe.poc.tasks.GenericECMRESTInvoker" name="Get VDCS Rest Call">
+      <bpmn2:extensionElements>
+        <camunda:field name="method" stringValue="GET"/>
+        <camunda:field name="endpointURL">
+          <camunda:expression>${GET_VDC_URL}</camunda:expression>
+        </camunda:field>
+        <camunda:field name="outPutVariable">
+          <camunda:string>getVDCSResp</camunda:string>
+        </camunda:field>
+        <camunda:field name="requestString">
+          <camunda:string>--</camunda:string>
+        </camunda:field>
+      </bpmn2:extensionElements>
+      <bpmn2:incoming>SequenceFlow_5</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_12</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_12" name="" sourceRef="GetVDC_RESTCall__prg__p20" targetRef="BuildMap__prg__p30"/>
+    <bpmn2:sequenceFlow id="SequenceFlow_8" name="" sourceRef="DeleteVM__prg__p70" targetRef="Wait__prg__p90"/>
+    <bpmn2:endEvent id="EndSuccess__prg__p100" name="end success">
+      <bpmn2:incoming>SequenceFlow_11</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:serviceTask id="DeleteVDC__prg__p90" camunda:class="com.ericsson.oss.nfe.poc.tasks.DeleteVDCS" name="Delete VDC">
+      <bpmn2:incoming>SequenceFlow_10</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_11</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_11" name="" sourceRef="DeleteVDC__prg__p90" targetRef="EndSuccess__prg__p100"/>
+    <bpmn2:intermediateCatchEvent id="Wait__prg__p90" name="Wait 90 Seconds">
+      <bpmn2:incoming>SequenceFlow_8</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_10</bpmn2:outgoing>
+      <bpmn2:timerEventDefinition id="TimerEventDefinition_1">
+        <bpmn2:timeDuration xsi:type="bpmn2:tFormalExpression">PT90S</bpmn2:timeDuration>
+      </bpmn2:timerEventDefinition>
+    </bpmn2:intermediateCatchEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_10" name="" sourceRef="Wait__prg__p90" targetRef="DeleteVDC__prg__p90"/>
+    <bpmn2:endEvent id="End__prg__p100" name="End Cancelled VDC Delete">
+      <bpmn2:incoming>SequenceFlow_6</bpmn2:incoming>
+    </bpmn2:endEvent>
+    <bpmn2:exclusiveGateway id="IDMapPresent__prg" name="ID Map Present ?" default="name_ids_present">
+      <bpmn2:incoming>SequenceFlow_9</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_10_empty</bpmn2:outgoing>
+      <bpmn2:outgoing>name_ids_present</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+    <bpmn2:sequenceFlow id="SequenceFlow_10_empty" name="Populate ID Map" sourceRef="IDMapPresent__prg" targetRef="PopulateURLs__prg__p10">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression">${empty execution.getVariable('ECM_NAMEID_MAP')} </bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+    <bpmn2:sequenceFlow id="name_ids_present" name="Yes" sourceRef="IDMapPresent__prg" targetRef="ExtractVDC_ID__prg__p40"/>
+    <bpmn2:startEvent id="StartEvent__prg__p0" name="Start">
+      <bpmn2:outgoing>SequenceFlow_9</bpmn2:outgoing>
+    </bpmn2:startEvent>
+    <bpmn2:sequenceFlow id="SequenceFlow_9" name="" sourceRef="StartEvent__prg__p0" targetRef="IDMapPresent__prg"/>
+    <bpmn2:scriptTask id="ExtractVDC_ID__prg__p40" name="Extract VDC ID" scriptFormat="groovy">
+      <bpmn2:incoming>name_ids_present</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_7</bpmn2:outgoing>
+      <bpmn2:script><![CDATA[println ' The vdc to delete is'+execution.getVariable('ECM_NAMEID_MAP') 
+def vdcNameVar = execution.getVariable('VDCName')
+def vdcStr =vdcNameVar +" (" + execution.getVariable('ECM_NAMEID_MAP') [vdcNameVar] + ")"
+execution.setVariable('delVdcNameId',vdcStr);]]></bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_7" name="" sourceRef="ExtractVDC_ID__prg__p40" targetRef="ConfirmDelete__prg__p50"/>
+    <bpmn2:userTask id="ConfirmDelete__prg__p50" camunda:formKey="embedded:app:json:model1:forms/vdc-deleteconfirmation.json" name="Confirm VDC Delete">
+      <bpmn2:incoming>SequenceFlow_7</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_1</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_1" name="" sourceRef="ConfirmDelete__prg__p50" targetRef="ChooseOption__prg"/>
+    <bpmn2:userTask id="UserTask_1" camunda:formKey="embedded:app:json:model1:forms/vdcdelete-select.json" name="Choose VDC from List">
+      <bpmn2:incoming>SequenceFlow_2</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_4</bpmn2:outgoing>
+    </bpmn2:userTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_4" name="" sourceRef="UserTask_1" targetRef="ChooseOption__prg"/>
+    <bpmn2:scriptTask id="BuildMap__prg__p30" name="Build Map" scriptFormat="groovy">
+      <bpmn2:incoming>SequenceFlow_12</bpmn2:incoming>
+      <bpmn2:outgoing>SequenceFlow_2</bpmn2:outgoing>
+      <bpmn2:script><![CDATA[def respSTR = execution.getVariable('getVDCSResp')
+def slurper = new groovy.json.JsonSlurper()
+def respJson = slurper.parseText(respSTR.jsonStr)
+def vdcNameVar = execution.getVariable('VDCName')
+def vdc
+def vdcStr = ""
+if(vdcNameVar!=null)
+{
+	 respJson.vdcs.each { item ->
+	 	if(item.provisioningStatus=='ACTIVE' && 
+			vdcNameVar.equals(item.name))
+		{	
+			vdc = item;		
+		}	 
+	}
+	if(vdc!=null)
+	{
+		println ' Got the vdc -->'+vdc
+		def map = new java.util.HashMap();
+		map.put(vdc.name,vdc.id);
+		execution.setVariable('ECM_NAMEID_MAP',   map) 
+		execution.removeVariable('getVDCSResp')
+		vdcStr= vdc.name + "(" +vdc.id + ")"
+	}
+}
+else
+{
+	respJson.vdcs.each { item ->
+	 	if(item.provisioningStatus=='ACTIVE')
+		{	
+			vdcStr += item.name + "(" +item.id + "),";		
+		}	 
+	} 
+}
+
+execution.setVariable('delVdcNameId',vdcStr);]]></bpmn2:script>
+    </bpmn2:scriptTask>
+    <bpmn2:sequenceFlow id="SequenceFlow_2" name="" sourceRef="BuildMap__prg__p30" targetRef="UserTask_1"/>
+  </bpmn2:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="delete_resources">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_14" bpmnElement="StartEvent__prg__p0">
+        <dc:Bounds height="36.0" width="36.0" x="60.0" y="287.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="34.0" x="61.0" y="328.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_2" bpmnElement="PopulateURLs__prg__p10">
+        <dc:Bounds height="80.0" width="100.0" x="276.0" y="399.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ScriptTask_29" bpmnElement="GetVDC_RESTCall__prg__p20">
+        <dc:Bounds height="80.0" width="100.0" x="432.0" y="399.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_5" bpmnElement="SequenceFlow_5" sourceElement="_BPMNShape_ServiceTask_2" targetElement="_BPMNShape_ScriptTask_29">
+        <di:waypoint xsi:type="dc:Point" x="376.0" y="439.0"/>
+        <di:waypoint xsi:type="dc:Point" x="432.0" y="439.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="398.0" y="439.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_UserTask_2" bpmnElement="ExtractVDC_ID__prg__p40">
+        <dc:Bounds height="80.0" width="100.0" x="477.0" y="265.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_3" bpmnElement="ConfirmDelete__prg__p50">
+        <dc:Bounds height="80.0" width="100.0" x="744.0" y="265.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_7" bpmnElement="SequenceFlow_7" sourceElement="_BPMNShape_UserTask_2" targetElement="_BPMNShape_ServiceTask_3">
+        <di:waypoint xsi:type="dc:Point" x="577.0" y="305.0"/>
+        <di:waypoint xsi:type="dc:Point" x="744.0" y="305.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="581.0" y="302.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_9" bpmnElement="IDMapPresent__prg" isMarkerVisible="true">
+        <dc:Bounds height="50.0" width="50.0" x="192.0" y="280.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="109.0" x="164.0" y="239.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_9" bpmnElement="SequenceFlow_9" sourceElement="_BPMNShape_StartEvent_14" targetElement="_BPMNShape_ExclusiveGateway_9">
+        <di:waypoint xsi:type="dc:Point" x="96.0" y="305.0"/>
+        <di:waypoint xsi:type="dc:Point" x="192.0" y="305.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="118.0" y="305.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_10" bpmnElement="SequenceFlow_10_empty" sourceElement="_BPMNShape_ExclusiveGateway_9" targetElement="_BPMNShape_ServiceTask_2">
+        <di:waypoint xsi:type="dc:Point" x="217.0" y="330.0"/>
+        <di:waypoint xsi:type="dc:Point" x="217.0" y="439.0"/>
+        <di:waypoint xsi:type="dc:Point" x="276.0" y="439.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="104.0" x="185.0" y="439.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_11" bpmnElement="name_ids_present" sourceElement="_BPMNShape_ExclusiveGateway_9" targetElement="_BPMNShape_UserTask_2">
+        <di:waypoint xsi:type="dc:Point" x="242.0" y="305.0"/>
+        <di:waypoint xsi:type="dc:Point" x="477.0" y="305.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="28.0" x="320.0" y="305.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ScriptTask_30" bpmnElement="BuildMap__prg__p30">
+        <dc:Bounds height="80.0" width="100.0" x="599.0" y="399.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_12" bpmnElement="SequenceFlow_12" sourceElement="_BPMNShape_ScriptTask_29" targetElement="_BPMNShape_ScriptTask_30">
+        <di:waypoint xsi:type="dc:Point" x="532.0" y="439.0"/>
+        <di:waypoint xsi:type="dc:Point" x="599.0" y="439.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="554.0" y="439.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ExclusiveGateway_10" bpmnElement="ChooseOption__prg" isMarkerVisible="true">
+        <dc:Bounds height="50.0" width="50.0" x="992.0" y="280.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="98.0" x="964.0" y="251.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_1" bpmnElement="SequenceFlow_1" sourceElement="_BPMNShape_ServiceTask_3" targetElement="_BPMNShape_ExclusiveGateway_10">
+        <di:waypoint xsi:type="dc:Point" x="844.0" y="305.0"/>
+        <di:waypoint xsi:type="dc:Point" x="992.0" y="305.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="866.0" y="305.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_42" bpmnElement="DeleteVM__prg__p70">
+        <dc:Bounds height="80.0" width="100.0" x="1094.0" y="425.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_3" bpmnElement="SequenceFlow_3" sourceElement="_BPMNShape_ExclusiveGateway_10" targetElement="_BPMNShape_ServiceTask_42">
+        <di:waypoint xsi:type="dc:Point" x="1017.0" y="330.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1017.0" y="465.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1094.0" y="465.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="28.0" x="1020.0" y="384.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_EndEvent_30" bpmnElement="EndSuccess__prg__p100">
+        <dc:Bounds height="36.0" width="36.0" x="1512.0" y="447.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="22.0" width="80.0" x="1490.0" y="488.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_ScriptTask_32" bpmnElement="LogNo__prg__p90">
+        <dc:Bounds height="80.0" width="100.0" x="1092.0" y="265.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_6" bpmnElement="SequenceFlow_2_no" sourceElement="_BPMNShape_ExclusiveGateway_10" targetElement="_BPMNShape_ScriptTask_32">
+        <di:waypoint xsi:type="dc:Point" x="1042.0" y="305.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1092.0" y="305.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1064.0" y="305.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_EndEvent_31" bpmnElement="End__prg__p100">
+        <dc:Bounds height="36.0" width="36.0" x="1356.0" y="287.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="0.0" width="0.0" x="1374.0" y="328.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_8" bpmnElement="SequenceFlow_6" sourceElement="_BPMNShape_ScriptTask_32" targetElement="_BPMNShape_EndEvent_31">
+        <di:waypoint xsi:type="dc:Point" x="1192.0" y="305.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1356.0" y="305.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1084.0" y="304.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_IntermediateCatchEvent_3" bpmnElement="Wait__prg__p90">
+        <dc:Bounds height="36.0" width="36.0" x="1266.0" y="447.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="0.0" width="0.0" x="1284.0" y="488.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_2" bpmnElement="SequenceFlow_8" sourceElement="_BPMNShape_ServiceTask_42" targetElement="_BPMNShape_IntermediateCatchEvent_3">
+        <di:waypoint xsi:type="dc:Point" x="1194.0" y="465.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1266.0" y="465.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1216.0" y="465.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_ServiceTask_43" bpmnElement="DeleteVDC__prg__p90">
+        <dc:Bounds height="80.0" width="100.0" x="1344.0" y="425.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_14" bpmnElement="SequenceFlow_10" sourceElement="_BPMNShape_IntermediateCatchEvent_3" targetElement="_BPMNShape_ServiceTask_43">
+        <di:waypoint xsi:type="dc:Point" x="1302.0" y="465.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1344.0" y="465.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="1303.0" y="465.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_15" bpmnElement="SequenceFlow_11" sourceElement="_BPMNShape_ServiceTask_43" targetElement="_BPMNShape_EndEvent_30">
+        <di:waypoint xsi:type="dc:Point" x="1444.0" y="465.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1512.0" y="465.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_UserTask_6" bpmnElement="UserTask_1">
+        <dc:Bounds height="80.0" width="100.0" x="756.0" y="399.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_4" bpmnElement="SequenceFlow_2" sourceElement="_BPMNShape_ScriptTask_30" targetElement="_BPMNShape_UserTask_6">
+        <di:waypoint xsi:type="dc:Point" x="699.0" y="439.0"/>
+        <di:waypoint xsi:type="dc:Point" x="756.0" y="439.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="721.0" y="439.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_SequenceFlow_16" bpmnElement="SequenceFlow_4" sourceElement="_BPMNShape_UserTask_6" targetElement="_BPMNShape_ExclusiveGateway_10">
+        <di:waypoint xsi:type="dc:Point" x="856.0" y="428.0"/>
+        <di:waypoint xsi:type="dc:Point" x="947.0" y="408.0"/>
+        <di:waypoint xsi:type="dc:Point" x="1000.0" y="330.0"/>
+        <bpmndi:BPMNLabel>
+          <dc:Bounds height="6.0" width="6.0" x="976.0" y="361.0"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn2:definitions>

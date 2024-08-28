@@ -1,0 +1,19 @@
+{
+    "modelType": "model1",
+    "submitText": "Submit",
+    "cancelText": "Cancel",
+    "controlGroups":
+        [
+              { "controlGroup": { "name": "IP Address of nfs vm", "label": "IP Address of nfs vm", "type": "text",
+                "controls": [
+                    { "variable": { "type": "string", "name": "nfsvmip", "readonly": true},
+                     "initialValue": { "source": "instance","value": ""}}
+                ]}},
+           
+              { "controlGroup": { "name": "FTPConfirm", "label": "NFS VM FTP File?", "type": "check", 
+                "controls": [
+                    { "variable": { "type": "boolean", "name": "nfsftpconfirm", "readonly": false}, 
+                      "initialValue": { "source": "local", "value": false } }
+                ]}}                
+        ]
+}

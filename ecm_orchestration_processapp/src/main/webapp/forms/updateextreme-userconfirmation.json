@@ -1,0 +1,21 @@
+{
+    "modelType": "model1",
+    "submitText": "Submit",
+    "cancelText": "Cancel",
+    "controlGroups":
+        [
+             
+           
+           { "controlGroup": { "name": "SegmentationID", "label": "Segmentation ID", "type": "text",
+                "controls": [
+                    { "variable": { "type": "string", "name": "segID", "readonly": true},
+                     "initialValue": { "source": "instance" }}
+                ]}},
+                    
+              { "controlGroup": { "name": "UpdateConfirm", "label": "Update Confirm", "type": "check", 
+                "controls": [
+                    { "variable": { "type": "boolean", "name": "YesUpdate", "readonly": false}, 
+                      "initialValue": { "source": "local", "value": false } }
+                ]}}           
+        ]
+}

@@ -1,0 +1,10 @@
+{
+    "rating": {         
+        "quality": {
+            "values": 6
+        },
+        "colour": {
+     	 "values": 4
+        }
+    }
+}

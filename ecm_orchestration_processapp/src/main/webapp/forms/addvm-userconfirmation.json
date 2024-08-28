@@ -1,0 +1,15 @@
+{
+    "modelType": "model1",
+    "submitText": "Submit",
+    "cancelText": "Cancel",
+    "controlGroups":
+        [
+             
+           
+              { "controlGroup": { "name": "CreateAllConfirm", "label": "Create All VMs Confirm", "type": "check", 
+                "controls": [
+                    { "variable": { "type": "boolean", "name": "createAll", "readonly": false}, 
+                      "initialValue": { "source": "local", "value": false } }
+                ]}}                
+        ]
+}

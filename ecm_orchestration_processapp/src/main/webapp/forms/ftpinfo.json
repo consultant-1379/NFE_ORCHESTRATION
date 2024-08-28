@@ -1,0 +1,19 @@
+{
+    "modelType": "model1",
+    "submitText": "Submit",
+    "cancelText": "Cancel",
+    "controlGroups":
+        [
+             
+            { "controlGroup": { "name": "InstanceType", "label": "Instance Type", "type": "select",
+                "controls": [
+                    { "variable": { "type": "string", "name": "instanceType", "readonly": false},
+                      "initialValue": { "source": "local", "values": ["EPG", "PGW","SGW"] } }
+                ]}},
+                  { "controlGroup": { "name": "NFS IP Address", "label": "NFS IP Address", "type": "text",
+                "controls": [
+                    { "variable": { "type": "string", "name": "nfsvmip", "readonly": false},
+                      "initialValue": { "source": "local", "value": "10.90.0.20" } }
+                ]}} 
+        ]
+}

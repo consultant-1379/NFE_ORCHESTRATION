@@ -1,0 +1,20 @@
+{
+    "modelType": "model1",
+    "submitText": "Submit",
+    "cancelText": "Cancel",
+    "controlGroups":
+        [
+             
+            { "controlGroup": { "name": "VDC Name", "label": "VDC To Delete", "type": "select",
+                "controls": [
+                    { "variable": { "type": "string", "name": "delVdcNameId", "readonly": false},
+                     "initialValue": { "source": "instance" }}
+                ]}},
+                    
+              { "controlGroup": { "name": "DeleteConfirm", "label": "Delete Confirm", "type": "check", 
+                "controls": [
+                    { "variable": { "type": "boolean", "name": "YesDelete", "readonly": false}, 
+                      "initialValue": { "source": "local", "value": false } }
+                ]}}                
+        ]
+}
